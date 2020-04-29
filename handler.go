@@ -34,7 +34,6 @@ func Handler(c Cache, h http.Handler) http.Handler {
 type respWrapper struct {
 	http.ResponseWriter
 	io.Writer
-	http.CloseNotifier
 }
 
 func (r *respWrapper) Write(p []byte) (int, error) {
@@ -42,5 +41,6 @@ func (r *respWrapper) Write(p []byte) (int, error) {
 }
 
 func (r *respWrapper) CloseNotify() <-chan bool {
-	return r.CloseNotifier.CloseNotify()
+	wr := r.ResponseWriter
+	return wr.(http.CloseNotifier).CloseNotify()
 }
