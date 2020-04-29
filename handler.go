@@ -2,6 +2,7 @@ package fscache
 
 import (
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -12,8 +13,10 @@ import (
 func Handler(c Cache, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		url := req.URL.String()
+		log.Printf("->%s", url)
 		r, w, err := c.Get(url)
 		if err != nil {
+			log.Printf("->err calling handler %s", url)
 			h.ServeHTTP(rw, req)
 			return
 		}
@@ -21,12 +24,14 @@ func Handler(c Cache, h http.Handler) http.Handler {
 		if w != nil {
 			go func() {
 				defer w.Close()
+				log.Printf("-> w!=nill calling handler , write to cache %s", url)
 				h.ServeHTTP(&respWrapper{
 					ResponseWriter: rw,
 					Writer:         w,
 				}, req)
 			}()
 		}
+		log.Printf("-> copy result %s", url)
 		io.Copy(rw, r)
 	})
 }
